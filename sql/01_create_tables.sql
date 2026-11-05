@@ -40,12 +40,13 @@ CREATE TABLE dim_county (
     county     VARCHAR(20) NOT NULL UNIQUE
 );
 
-/* Sectors: one row per 4-digit NACE code, with its NACE Rev 2 section letter.
-   nace_section is NULL for codes that do not exist in NACE Rev 2 */
+/* Sectors: one row per 4-digit NACE code, with its NACE Rev 2 section letter and name.
+   nace_section and section_name are NULL for codes that do not exist in NACE Rev 2 */
 CREATE TABLE dim_sector (
-    sector_id     INT     NOT NULL PRIMARY KEY,
-    nace_code     CHAR(4) NOT NULL UNIQUE,
-    nace_section  CHAR(1) NULL
+    sector_id     INT          NOT NULL PRIMARY KEY,
+    nace_code     CHAR(4)      NOT NULL UNIQUE,
+    nace_section  CHAR(1)      NULL,
+    section_name  VARCHAR(50)  NULL
 );
 
 /* CRO statuses: closed = left the register;
