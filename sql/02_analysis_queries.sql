@@ -210,3 +210,90 @@ SELECT
 FROM counts
 ORDER BY survival_5y_pct DESC;
 
+/*
+    Query 4.1: 5-year survival, Dublin compared with all other counties
+    Business question 4: do Dublin companies survive longer than companies in other counties?
+    All cohorts, with the same censoring rule as Query 2.1.
+    Companies with no county are left out (inner JOIN to dim_county).
+*/
+WITH data_date AS (
+    SELECT MAX([date]) AS last_date
+    FROM dim_date
+),
+companies AS (
+    SELECT
+        CASE WHEN c.county = 'DUBLIN' THEN 'Dublin'
+             ELSE 'Other counties' END AS area,
+        f.closed_date,
+        DATEADD(YEAR, 5, f.reg_date) AS date_5y,   -- 5th anniversary
+        dd.last_date
+    FROM fact_company AS f
+    JOIN dim_county AS c
+        ON f.county_id = c.county_id
+    CROSS JOIN data_date AS dd
+),
+counts AS (
+    SELECT
+        area,
+        COUNT(*) AS companies,
+        SUM(CASE WHEN date_5y <= last_date
+                 THEN 1 ELSE 0 END) AS eligible_5y,
+        SUM(CASE WHEN date_5y <= last_date
+                  AND (closed_date IS NULL OR closed_date > date_5y)
+                 THEN 1 ELSE 0 END) AS survived_5y
+    FROM companies
+    GROUP BY area
+)
+SELECT
+    area,
+    companies,
+    eligible_5y,
+    survived_5y,
+    CAST(survived_5y * 100.0 / NULLIF(eligible_5y, 0) AS DECIMAL(5, 1)) AS survival_5y_pct
+FROM counts
+ORDER BY area;
+
+/*
+    Query 4.2: 5-year survival, Dublin compared with all other counties, per cohort
+    Business question 4: does the gap from Query 4.1 hold for every cohort?
+    Same rules as Query 4.1. A share is NULL when the cohort is not 5 years old yet.
+*/
+WITH data_date AS (
+    SELECT MAX([date]) AS last_date
+    FROM dim_date
+),
+companies AS (
+    SELECT
+        d.[year] AS reg_year,
+        CASE WHEN c.county = 'DUBLIN' THEN 'Dublin'
+             ELSE 'Other counties' END AS area,
+        f.closed_date,
+        DATEADD(YEAR, 5, f.reg_date) AS date_5y,   -- 5th anniversary
+        dd.last_date
+    FROM fact_company AS f
+    JOIN dim_date AS d
+        ON f.reg_date = d.[date]
+    JOIN dim_county AS c
+        ON f.county_id = c.county_id
+    CROSS JOIN data_date AS dd
+),
+counts AS (
+    SELECT
+        reg_year,
+        area,
+        COUNT(*) AS companies,
+        SUM(CASE WHEN date_5y <= last_date
+                 THEN 1 ELSE 0 END) AS eligible_5y,
+        SUM(CASE WHEN date_5y <= last_date
+                  AND (closed_date IS NULL OR closed_date > date_5y)
+                 THEN 1 ELSE 0 END) AS survived_5y
+    FROM companies
+    GROUP BY reg_year, area
+)
+SELECT
+    reg_year,
+    area,
+    companies,
+    CAST(survived_5y * 100.0 / NULLIF(eligible_5y, 0) AS DECIMAL(5, 1)) AS survival_5y_pct
+FROM counts
+ORDER BY reg_year, area;
