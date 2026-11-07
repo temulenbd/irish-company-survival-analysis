@@ -84,3 +84,80 @@ LEFT JOIN dim_sector AS s
 WHERE d.[year] >= 2016
 GROUP BY s.nace_section, s.section_name
 ORDER BY registrations DESC;
+
+/*
+    Query 2.1: Share of companies still registered 1, 3 and 5 years after registration, per cohort
+    Business question 2: what share of companies survive 1, 3 and 5 years?
+    A cohort = all companies registered in the same year.
+    Survived k years = no closing date, or closed after its k-th anniversary.
+    Censoring: a company counts for k years only if its k-th anniversary is on or
+    before the data date (the last date in dim_date). Younger companies are left out.
+    A share is NULL when no company in the cohort is old enough yet.
+*/
+WITH data_date AS (
+    SELECT MAX([date]) AS last_date
+    FROM dim_date
+),
+companies AS (
+    SELECT
+        d.[year] AS reg_year,
+        f.closed_date,
+        DATEADD(YEAR, 1, f.reg_date) AS date_1y,   -- 1st anniversary
+        DATEADD(YEAR, 3, f.reg_date) AS date_3y,   -- 3rd anniversary
+        DATEADD(YEAR, 5, f.reg_date) AS date_5y,   -- 5th anniversary
+        dd.last_date
+    FROM fact_company AS f
+    JOIN dim_date AS d
+        ON f.reg_date = d.[date]
+    CROSS JOIN data_date AS dd                     -- adds last_date to every row
+),
+counts AS (
+    SELECT
+        reg_year,
+        COUNT(*) AS companies,
+        -- 1 year
+        SUM(CASE WHEN date_1y <= last_date
+                 THEN 1 ELSE 0 END) AS eligible_1y,
+        SUM(CASE WHEN date_1y <= last_date
+                  AND (closed_date IS NULL OR closed_date > date_1y)
+                 THEN 1 ELSE 0 END) AS survived_1y,
+        -- 3 years
+        SUM(CASE WHEN date_3y <= last_date
+                 THEN 1 ELSE 0 END) AS eligible_3y,
+        SUM(CASE WHEN date_3y <= last_date
+                  AND (closed_date IS NULL OR closed_date > date_3y)
+                 THEN 1 ELSE 0 END) AS survived_3y,
+        -- 5 years
+        SUM(CASE WHEN date_5y <= last_date
+                 THEN 1 ELSE 0 END) AS eligible_5y,
+        SUM(CASE WHEN date_5y <= last_date
+                  AND (closed_date IS NULL OR closed_date > date_5y)
+                 THEN 1 ELSE 0 END) AS survived_5y
+    FROM companies
+    GROUP BY reg_year
+)
+SELECT
+    reg_year,
+    companies,
+    CAST(survived_1y * 100.0 / NULLIF(eligible_1y, 0) AS DECIMAL(5, 1)) AS survival_1y_pct,
+    CAST(survived_3y * 100.0 / NULLIF(eligible_3y, 0) AS DECIMAL(5, 1)) AS survival_3y_pct,
+    CAST(survived_5y * 100.0 / NULLIF(eligible_5y, 0) AS DECIMAL(5, 1)) AS survival_5y_pct
+FROM counts
+ORDER BY reg_year;
+
+/*
+    Query 2.2: Companies closed each year
+    Business question 2: checks whether closures slowed down in some years,
+    which would make survival look higher for the cohorts measured in those years.
+    The inner JOIN on closed_date leaves out companies that are still registered.
+    The last year is a part year. It ends at the data date.
+*/
+SELECT
+    d.[year] AS closed_year,
+    COUNT(*) AS closures
+FROM fact_company AS f
+JOIN dim_date AS d
+    ON f.closed_date = d.[date]      -- joins on the closing date, not the registration date
+GROUP BY d.[year]
+ORDER BY d.[year];
+
