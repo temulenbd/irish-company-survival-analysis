@@ -161,3 +161,52 @@ JOIN dim_date AS d
 GROUP BY d.[year]
 ORDER BY d.[year];
 
+/*
+    Query 3.1: 5-year survival by sector, companies registered 2016 to 2020
+    Business question 3: which sectors have the highest and lowest 5-year survival?
+    2016 to 2020 because sector codes start in 2015 and these cohorts have had 5 years.
+    Companies with no sector code are left out (inner JOIN to dim_sector).
+    Sectors with fewer than 100 companies are left out, because their shares are unstable.
+*/
+WITH data_date AS (
+    SELECT MAX([date]) AS last_date
+    FROM dim_date
+),
+companies AS (
+    SELECT
+        s.nace_section,
+        s.section_name,
+        f.closed_date,
+        DATEADD(YEAR, 5, f.reg_date) AS date_5y,   -- 5th anniversary
+        dd.last_date
+    FROM fact_company AS f
+    JOIN dim_date AS d
+        ON f.reg_date = d.[date]
+    JOIN dim_sector AS s
+        ON f.sector_id = s.sector_id
+    CROSS JOIN data_date AS dd
+    WHERE d.[year] BETWEEN 2016 AND 2020
+),
+counts AS (
+    SELECT
+        nace_section,
+        section_name,
+        COUNT(*) AS companies,
+        SUM(CASE WHEN date_5y <= last_date
+                 THEN 1 ELSE 0 END) AS eligible_5y,
+        SUM(CASE WHEN date_5y <= last_date
+                  AND (closed_date IS NULL OR closed_date > date_5y)
+                 THEN 1 ELSE 0 END) AS survived_5y
+    FROM companies
+    GROUP BY nace_section, section_name
+    HAVING COUNT(*) >= 100
+)
+SELECT
+    nace_section,
+    section_name,
+    companies,
+    eligible_5y,
+    CAST(survived_5y * 100.0 / NULLIF(eligible_5y, 0) AS DECIMAL(5, 1)) AS survival_5y_pct
+FROM counts
+ORDER BY survival_5y_pct DESC;
+
