@@ -1,0 +1,7 @@
+set,model,auc,brier,mean_predicted_pct,actual_pct,auc_gain,chosen
+validation,Baseline (sector average),0.575,0.143,76.4,83.4,0.0,False
+validation,Logistic regression,0.597,0.142,76.3,83.4,0.022,True
+validation,Decision tree,0.587,0.142,76.4,83.4,0.012,False
+test,Baseline (sector average),0.584,0.121,78.7,86.6,0.0,False
+test,Logistic regression,0.61,0.121,78.6,86.6,0.026,True
+test,Decision tree,0.597,0.121,78.6,86.6,0.013,False
