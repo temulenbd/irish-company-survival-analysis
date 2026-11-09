@@ -1,0 +1,20 @@
+section_name,eligible_5y,survived_5y,survival_5y_pct,ci_low_pct,ci_high_pct
+Agriculture,3415,3256,95.3,94.6,96.0
+Construction,10777,9645,89.5,88.9,90.1
+Real estate,4567,3973,87.0,86.0,87.9
+Public administration,107,93,86.9,79.2,92.0
+Energy,511,435,85.1,81.8,87.9
+Transport,2347,1996,85.0,83.5,86.4
+Finance and insurance,16116,13647,84.7,84.1,85.2
+Water and waste,240,203,84.6,79.5,88.6
+Health and social work,3713,3061,82.4,81.2,83.6
+Administrative services,6673,5468,81.9,81.0,82.8
+Accommodation and food,6320,5168,81.8,80.8,82.7
+Manufacturing,2819,2285,81.1,79.6,82.5
+Mining,122,98,80.3,72.4,86.4
+Education,1769,1418,80.2,78.2,82.0
+Professional services,18365,14687,80.0,79.4,80.5
+Other services,8499,6768,79.6,78.8,80.5
+Wholesale and retail,12211,9602,78.6,77.9,79.4
+Arts and recreation,2598,2010,77.4,75.7,78.9
+Information and communication,9050,6433,71.1,70.1,72.0
