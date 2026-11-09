@@ -169,7 +169,7 @@ Short and official NACE Rev 2 section names:
 | 4.1 | 5-year survival, Dublin compared with all other counties | 4 |
 | 4.2 | The same comparison per cohort | 4 |
 
-Business question 5 (predicting 5-year survival) is answered in `notebooks/4_*.ipynb`, not in SQL.
+Business question 5 (predicting 5-year survival) is answered in `notebooks/4_survival_model.ipynb`, not in SQL.
 
 ## How to rebuild the database
 
