@@ -48,7 +48,7 @@ An analysis of over 500k companies registered in Ireland since 2000, using open 
 
 ## Power BI dashboard
 
-Five pages, built in Power BI Desktop (Import mode) from the SQL Server tables and the CSV files saved by notebooks 3 and 4. Every number on the cards and charts is calculated from the data or read from the notebook outputs. The page notes repeat those numbers as text.
+Five pages, built in Power BI Desktop (Import mode) from the SQL Server tables and the CSV files saved by notebooks 3 and 4. Every number on the cards and charts is calculated from the data or read from the notebook outputs. The page notes repeat those numbers as text. The charts are interactive in the `.pbix` file: hovering over a point or bar on pages 1, 3 and 4 shows the number of companies behind it, and hovering over a county on page 2 shows that county's registrations per year.
 
 | Page | Question | What it shows |
 |---|---|---|
