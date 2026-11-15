@@ -176,7 +176,7 @@ Business question 5 (predicting 5-year survival) is answered in `notebooks/4_sur
 Requirements: SQL Server (localhost, Windows Authentication), SSMS, ODBC Driver 18 for SQL Server,
 and the project's Python environment (`requirements.txt`).
 
-1. Download the "Company Records" file from the CRO open data portal (https://opendata.cro.ie) and save it as `data/raw/companies.csv.zip`. The data files are not in this repository because they are too large for GitHub.
+1. The raw file `data/raw/companies.csv.zip` (CRO "Company Records", downloaded October 2026) is in this repository. To use newer data, download the file again from the CRO open data portal (https://opendata.cro.ie) and save it under the same name.
 2. Run `notebooks/1_data_preparation.ipynb` to create `data/processed/companies_clean.csv`.
 3. In SSMS, open and run `sql/00_create_database.sql` (F5).
 4. Open and run `sql/01_create_tables.sql`. This drops and recreates all six tables, so any loaded data is lost.

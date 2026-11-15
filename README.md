@@ -48,7 +48,7 @@ An analysis of over 500k companies registered in Ireland since 2000, using open 
 
 ## Power BI dashboard
 
-Five pages, built in Power BI Desktop (Import mode) from the SQL Server tables and the CSV files saved by notebooks 3 and 4. Every number on the dashboard comes from the data or the notebook outputs. None are typed.
+Five pages, built in Power BI Desktop (Import mode) from the SQL Server tables and the CSV files saved by notebooks 3 and 4. Every number on the cards and charts is calculated from the data or read from the notebook outputs. The page notes repeat those numbers as text.
 
 | Page | Question | What it shows |
 |---|---|---|
@@ -118,7 +118,7 @@ irish-company-survival-analysis/
 | `status` | text | Status on the register, e.g. Normal, Dissolved, Strike Off Listed, Liquidation |
 | `closed` | true/false | True when the company has a closing date (left the register) |
 | `closed_date` | date | Date the company left the register; empty if still registered |
-| `nace_code` | number | 4-digit NACE Rev. 2 sector code chosen by the company; empty for most companies registered before 2015 |
+| `nace_code` | text | 4-digit NACE Rev. 2 sector code chosen by the company, stored as text to keep leading zeros (e.g. `0150`); empty for most companies registered before 2015 |
 | `county` | text | County taken from the registered address (uppercase); empty for 1,822 companies |
 
 ### `cohort_survival.csv` (72 rows, one per cohort and age)
@@ -195,7 +195,7 @@ Contains Irish Public Sector Data licensed under a Creative Commons Attribution 
 
 - **"Survived" means still on the register, not still trading.** Dormant companies count as survived. Companies listed for strike-off or in liquidation also count as survived, so notebook 3 repeats the analysis with a strict rule that counts them as closed.
 - **Recent 5-year rates are probably too high.** Closures fell in 2020 to 2023 and then rose sharply (12,684 in 2026 up to October). Companies removed from the register late still count as registered at their 5-year date.
-- **Sector results cover the 2016 to 2020 cohorts only.** Sector codes are mostly missing before 2015. Companies choose their own code, and broad codes such as management consultancy make Professional services larger.
+- **Sector results cover the 2016 to 2020 cohorts only.** NACE Rev. 2 sector codes are mostly missing before 2015: older companies have codes from an earlier system, which cannot be compared without converting them. Companies choose their own code, and broad codes such as management consultancy make Professional services larger.
 - **County comes from the registered address text.** 1,822 companies have no county, and a registered office is not always where the business operates.
 - **Some registration dates may be wrong.** Companies that merged may have an overwritten registration date. 29 companies with a closing date before their registration date were removed in notebook 1.
 - **The confidence intervals cover random variation only,** not errors in the register.
