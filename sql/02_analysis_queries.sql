@@ -20,10 +20,9 @@ SELECT
     COUNT(*) AS registrations      -- one row in fact_company = one company
 FROM fact_company AS f
 JOIN dim_date AS d
-    ON f.reg_date = d.[date]       -- links each company to its registration day
+    ON f.reg_date = d.[date]
 GROUP BY d.[year]
 ORDER BY d.[year];
-
 
 /*
     Query 1.2: Change in registrations from the previous year
@@ -69,7 +68,7 @@ ORDER BY registrations DESC;
 /*
     Query 1.4: New companies registered by sector, from 2016
     Business question 1: how many companies are registered in each sector?
-    From 2016 only, because sector codes are mostly missing before 2015.
+    From 2016 only, because NACE Rev 2 sector codes are mostly missing before 2015.
     LEFT JOIN keeps companies with no sector code. They show as one row with NULL.
 */
 SELECT
@@ -102,9 +101,9 @@ companies AS (
     SELECT
         d.[year] AS reg_year,
         f.closed_date,
-        DATEADD(YEAR, 1, f.reg_date) AS date_1y,   -- 1st anniversary
-        DATEADD(YEAR, 3, f.reg_date) AS date_3y,   -- 3rd anniversary
-        DATEADD(YEAR, 5, f.reg_date) AS date_5y,   -- 5th anniversary
+        DATEADD(YEAR, 1, f.reg_date) AS date_1y,
+        DATEADD(YEAR, 3, f.reg_date) AS date_3y,
+        DATEADD(YEAR, 5, f.reg_date) AS date_5y,
         dd.last_date
     FROM fact_company AS f
     JOIN dim_date AS d
@@ -164,7 +163,7 @@ ORDER BY d.[year];
 /*
     Query 3.1: 5-year survival by sector, companies registered 2016 to 2020
     Business question 3: which sectors have the highest and lowest 5-year survival?
-    2016 to 2020 because sector codes start in 2015 and these cohorts have had 5 years.
+    2016 to 2020 because NACE Rev 2 sector codes start in 2015 and these cohorts have had 5 years.
     Companies with no sector code are left out (inner JOIN to dim_sector).
     Sectors with fewer than 100 companies are left out, because their shares are unstable.
 */
@@ -177,7 +176,7 @@ companies AS (
         s.nace_section,
         s.section_name,
         f.closed_date,
-        DATEADD(YEAR, 5, f.reg_date) AS date_5y,   -- 5th anniversary
+        DATEADD(YEAR, 5, f.reg_date) AS date_5y,
         dd.last_date
     FROM fact_company AS f
     JOIN dim_date AS d
@@ -225,7 +224,7 @@ companies AS (
         CASE WHEN c.county = 'DUBLIN' THEN 'Dublin'
              ELSE 'Other counties' END AS area,
         f.closed_date,
-        DATEADD(YEAR, 5, f.reg_date) AS date_5y,   -- 5th anniversary
+        DATEADD(YEAR, 5, f.reg_date) AS date_5y,
         dd.last_date
     FROM fact_company AS f
     JOIN dim_county AS c
@@ -268,7 +267,7 @@ companies AS (
         CASE WHEN c.county = 'DUBLIN' THEN 'Dublin'
              ELSE 'Other counties' END AS area,
         f.closed_date,
-        DATEADD(YEAR, 5, f.reg_date) AS date_5y,   -- 5th anniversary
+        DATEADD(YEAR, 5, f.reg_date) AS date_5y,
         dd.last_date
     FROM fact_company AS f
     JOIN dim_date AS d
