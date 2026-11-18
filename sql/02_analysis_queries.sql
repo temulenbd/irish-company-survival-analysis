@@ -88,8 +88,8 @@ ORDER BY registrations DESC;
     Query 2.1: Share of companies still registered 1, 3 and 5 years after registration, per cohort
     Business question 2: what share of companies survive 1, 3 and 5 years?
     A cohort = all companies registered in the same year.
-    Survived k years = no closing date, or closed after its k-th anniversary.
-    Censoring: a company counts for k years only if its k-th anniversary is on or
+    Survived k years = no closing date, or closed after its k-year date.
+    Censoring: a company counts for k years only if its k-year date is on or
     before the data date (the last date in dim_date). Younger companies are left out.
     A share is NULL when no company in the cohort is old enough yet.
 */
@@ -146,8 +146,8 @@ ORDER BY reg_year;
 
 /*
     Query 2.2: Companies closed each year
-    Business question 2: checks whether closures slowed down in some years,
-    which would make survival look higher for the cohorts measured in those years.
+    Business question 2: checks if closures slowed down in some years.
+    That would make survival look higher for the cohorts measured in those years.
     The inner JOIN on closed_date leaves out companies that are still registered.
     The last year is a part year. It ends at the data date.
 */
@@ -165,7 +165,7 @@ ORDER BY d.[year];
     Business question 3: which sectors have the highest and lowest 5-year survival?
     2016 to 2020 because NACE Rev 2 sector codes start in 2015 and these cohorts have had 5 years.
     Companies with no sector code are left out (inner JOIN to dim_sector).
-    Sectors with fewer than 100 companies are left out, because their shares are unstable.
+    Sectors with fewer than 100 companies are left out, because their shares can change a lot by chance.
 */
 WITH data_date AS (
     SELECT MAX([date]) AS last_date

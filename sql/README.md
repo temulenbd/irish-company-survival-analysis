@@ -1,6 +1,6 @@
 # SQL database
 
-This folder builds the SQL Server database for the project and holds the analysis queries.
+This folder has the scripts that build the SQL Server database for the project, and the analysis queries.
 The database `irish_company_survival` is a star schema: one fact table with one row per company,
 and five small dimension tables for dates, company types, counties, sectors and statuses.
 
@@ -121,39 +121,39 @@ Short and official NACE Rev 2 section names:
 
 | Section | Divisions | Short name | Official name |
 |---|---|---|---|
-| A | 01–03 | Agriculture | Agriculture, forestry and fishing |
-| B | 05–09 | Mining | Mining and quarrying |
-| C | 10–33 | Manufacturing | Manufacturing |
+| A | 01-03 | Agriculture | Agriculture, forestry and fishing |
+| B | 05-09 | Mining | Mining and quarrying |
+| C | 10-33 | Manufacturing | Manufacturing |
 | D | 35 | Energy | Electricity, gas, steam and air conditioning supply |
-| E | 36–39 | Water and waste | Water supply; sewerage, waste management and remediation activities |
-| F | 41–43 | Construction | Construction |
-| G | 45–47 | Wholesale and retail | Wholesale and retail trade; repair of motor vehicles and motorcycles |
-| H | 49–53 | Transport | Transportation and storage |
-| I | 55–56 | Accommodation and food | Accommodation and food service activities |
-| J | 58–63 | Information and communication | Information and communication |
-| K | 64–66 | Finance and insurance | Financial and insurance activities |
+| E | 36-39 | Water and waste | Water supply; sewerage, waste management and remediation activities |
+| F | 41-43 | Construction | Construction |
+| G | 45-47 | Wholesale and retail | Wholesale and retail trade; repair of motor vehicles and motorcycles |
+| H | 49-53 | Transport | Transportation and storage |
+| I | 55-56 | Accommodation and food | Accommodation and food service activities |
+| J | 58-63 | Information and communication | Information and communication |
+| K | 64-66 | Finance and insurance | Financial and insurance activities |
 | L | 68 | Real estate | Real estate activities |
-| M | 69–75 | Professional services | Professional, scientific and technical activities |
-| N | 77–82 | Administrative services | Administrative and support service activities |
+| M | 69-75 | Professional services | Professional, scientific and technical activities |
+| N | 77-82 | Administrative services | Administrative and support service activities |
 | O | 84 | Public administration | Public administration and defence; compulsory social security |
 | P | 85 | Education | Education |
-| Q | 86–88 | Health and social work | Human health and social work activities |
-| R | 90–93 | Arts and recreation | Arts, entertainment and recreation |
-| S | 94–96 | Other services | Other service activities |
-| T | 97–98 | Households | Activities of households as employers and for own use |
+| Q | 86-88 | Health and social work | Human health and social work activities |
+| R | 90-93 | Arts and recreation | Arts, entertainment and recreation |
+| S | 94-96 | Other services | Other service activities |
+| T | 97-98 | Households | Activities of households as employers and for own use |
 | U | 99 | Extraterritorial bodies | Activities of extraterritorial organisations and bodies |
 
 ## Design decisions
 
 | Decision | Reason |
 |---|---|
-| One row per company in `fact_company` | Each company is registered once and closes at most once. Survival is a question about companies, so the company is the natural grain |
+| One row per company in `fact_company` | Each company is registered once and closes at most once. Survival is about companies, so one row for each company is the right level of detail (grain) |
 | One `dim_date` for both dates | `reg_date` and `closed_date` both link to the same calendar, so year filters work the same way for registrations and closures |
 | Missing county or sector stored as NULL | The company stays in the fact table. Counts of all companies use LEFT JOIN; rankings by county or sector use an inner JOIN and leave these companies out |
 | Survival is not stored in a column | Survival depends on the data date. The queries calculate it from `reg_date`, `closed_date` and the last date in `dim_date`, so the results update when newer data is loaded |
-| Censoring | A company counts for k-year survival only if its k-th anniversary is on or before the last date in `dim_date`. Younger companies are left out, so recent cohorts are not shown as surviving before they have had the time to close |
+| Censoring | A company counts for k-year survival only if its k-year date is on or before the last date in `dim_date`. Younger companies are left out, so recent cohorts do not look like they survived before they had time to close |
 | Plain integer IDs from 1 | Simple keys, built and loaded by notebook 2 |
-| Two closed flags in `dim_status` | `closed` is the main rule; `closed_strict` allows a sensitivity check on companies that are on their way off the register |
+| Two closed flags in `dim_status` | `closed` is the main rule; `closed_strict` lets me do a sensitivity check on companies that are on their way off the register |
 
 ## Analysis queries (`02_analysis_queries.sql`)
 

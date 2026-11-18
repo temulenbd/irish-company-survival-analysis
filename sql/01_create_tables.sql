@@ -4,8 +4,8 @@
     Author:  Temuulen Bulgan
 
     Creates the star schema: five dimension tables and one fact table
-    with one row per company. The tables are empty; notebook 2 loads them.
-    Run after 00_create_database.sql. Running it again drops and recreates the tables.
+    with one row per company. The tables are empty. Notebook 2 loads them.
+    Run after 00_create_database.sql. If you run it again, it drops the tables and creates them again.
 */
 
 USE irish_company_survival;

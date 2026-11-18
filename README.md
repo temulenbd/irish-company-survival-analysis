@@ -1,6 +1,8 @@
 # Which new Irish companies survive?
 
-An analysis of over 500k companies registered in Ireland since 2000, using open data from the Companies Registration Office (CRO). It covers data preparation in Python, a SQL Server database, survival analysis by cohort, sector and county, a model that predicts 5-year survival, and a five-page Power BI dashboard.
+How long do new Irish companies last? I used the public company register from the Companies Registration Office (CRO), with 512,008 companies registered from 2000 to October 2026. For each company, I checked if it was still registered 1, 3 and 5 years later. Then I compared the results by year, sector and county. Of the companies that were at least 5 years old, 73.7% were still registered.
+
+I cleaned the data in Python, stored it in a SQL Server database, did the analysis in Python, built a simple model to predict which companies last 5 years, and made a five-page Power BI dashboard.
 
 **Tools:** Python (pandas, NumPy, matplotlib, SciPy, statsmodels, scikit-learn), SQL Server (T-SQL), Power BI, Git
 
@@ -19,20 +21,20 @@ An analysis of over 500k companies registered in Ireland since 2000, using open 
 | # | Finding | Evidence |
 |---|---|---|
 | 1 | **Registrations have grown since 2010, with no clear Brexit effect.** They fell to 13,465 in 2009 and reached 26,533 in 2025, the highest year. They dipped slightly in 2020. Dublin has 44.4% of all companies. | Yearly counts, checked against SQL (notebook 3, section 2) |
-| 2 | **Almost every company survives its first year. 5-year survival is higher for recent cohorts, but part of the rise comes from late closures.** Across all cohorts, 99.3% were still registered after 1 year, 86.5% after 3 years and 73.7% after 5 years. 5-year survival was 62.0% for the 2008 cohort and 87.3% for 2019, which falls to 79.3% under the strict closed rule. | Survival rates with 95% Wilson intervals, closures per year, strict-rule sensitivity check (notebook 3, section 3) |
+| 2 | **Almost every company survives its first year. 5-year survival is higher for recent cohorts, but part of the rise comes from late closures.** Across all cohorts, 99.3% were still registered after 1 year, 86.5% after 3 years and 73.7% after 5 years. 5-year survival was 62.0% for the 2008 cohort and 87.3% for 2019, which falls to 79.3% under the strict closed rule. Closures dropped in 2020 to 2023. In those years the CRO stopped removing companies that did not file their returns, because of COVID-19. After it started again, closures went up to 12,684 in 2026 (to October). | Survival rates with 95% Wilson intervals, closures per year, strict-rule sensitivity check (notebook 3, section 3), CRO stopping strike-offs (see Data sources) |
 | 3 | **Agriculture has the highest 5-year survival and Information and communication the lowest.** For the 2016 to 2020 cohorts: 95.3% against 71.1%, a gap of 24.2 percentage points. The middle of the ranking overlaps. | 19 sectors with at least 100 companies, 95% Wilson intervals (notebook 3, section 4) |
 | 4 | **Dublin companies survive less, not longer.** 70.7% of Dublin companies were still registered after 5 years, against 76.2% in other counties (gap -5.5 points, 95% CI -5.7 to -5.2). Dublin is lower in all 22 cohorts. | Newcombe interval, cohort-by-cohort comparison, direct standardisation for sector mix (-5.9 points), sensitivity checks (notebook 3, section 5) |
-| 5 | **A simple model beats the baseline, but only by a small margin.** Logistic regression has a test AUC of 0.610, against 0.584 for the sector-average baseline (+0.026). Sector, area and company type predict survival only weakly. | Train 2016–2017, validation 2018, test 2019–2020; model chosen on validation (notebook 4) |
+| 5 | **A simple model beats the baseline, but only by a small margin.** Logistic regression has a test AUC of 0.610, against 0.584 for the sector-average baseline (+0.026). Sector, area and company type predict survival only weakly. | Train 2016-2017, validation 2018, test 2019-2020; model chosen on validation (notebook 4) |
 
 ## Predicting 5-year survival
 
 **Question:** can a company's sector, area (Dublin or other counties) and company type predict whether it is still registered 5 years after registration?
 
-**How it was tested**
-- **Data:** 109,888 companies from the 2016 to 2020 cohorts, the years with reliable sector codes and a full 5-year outcome. 81.9% survived, so accuracy would be misleading. The models are compared on AUC (how well they rank survivors above closures, where 0.5 is guessing) and Brier score (the average squared error of the predicted probability).
-- **Split by registration year, not at random:** train on 2016–2017, validation on 2018, test on 2019–2020. Each model is always scored on companies registered after the ones it learned from.
-- **Three models:** a baseline that gives every company its sector's average survival, a logistic regression, and a decision tree with settings fixed in advance (`max_depth = 4`, `min_samples_leaf = 200`).
-- **One choice, one test:** the model was chosen on the validation cohort. All three were then refitted on 2016–2018 and scored once on the test cohorts.
+**How I tested it**
+- **Data:** 109,888 companies from the 2016 to 2020 cohorts. These are the only years with the new sector codes and a full 5 years of data. 81.9% survived, so a model that says "survived" for every company would already be 81.9% accurate. That is why I use AUC (how well the model puts survivors above closed companies, where 0.5 is guessing and 1.0 is perfect) and Brier score (the average squared error of the predicted probability, where lower is better).
+- **Split by registration year, not at random:** train on 2016-2017, validation on 2018, test on 2019-2020. Each model is always tested on companies registered after the ones it learned from, like it would be used in real life.
+- **Three models:** a baseline that gives every company its sector's average survival, a logistic regression, and a decision tree with settings I chose before training (`max_depth = 4`, `min_samples_leaf = 200`).
+- **One choice, one test:** I chose the model on the validation year. Then I trained all three again on 2016-2018 and tested them once on 2019-2020.
 
 **Results**
 
@@ -44,11 +46,11 @@ An analysis of over 500k companies registered in Ireland since 2000, using open 
 
 ![Test AUC by model](figures/04_test_auc_by_model.png)
 
-**Takeaway:** the logistic regression beats the baseline on both validation (+0.022) and test (+0.026), so the gain holds on new cohorts. But all three models rank companies only a little better than guessing: the CRO data has no size, owner or financial information. All models predict about 78.6% survival for the test companies, against 86.6% that survived, because they learn from earlier cohorts with lower survival. The predictions are useful for ranking companies, not as exact survival rates.
+**Takeaway:** the logistic regression beats the baseline on validation (+0.022) and on test (+0.026), so the gain holds on new years. But all three models are only a little better than guessing, because the CRO data has no information on company size, owners or money. All models predict about 78.6% survival for the test companies, but 86.6% really survived. This is because they learn from earlier years, when survival was lower. So the predictions are good for ranking companies, not as exact survival rates.
 
 ## Power BI dashboard
 
-Five pages, built in Power BI Desktop (Import mode) from the SQL Server tables and the CSV files saved by notebooks 3 and 4. Every number on the cards and charts is calculated from the data or read from the notebook outputs. The page notes repeat those numbers as text. The charts are interactive in the `.pbix` file: hovering over a point or bar on pages 1, 3 and 4 shows the number of companies behind it, and hovering over a county on page 2 shows that county's registrations per year.
+Five pages, built in Power BI Desktop (Import mode) from the SQL Server tables and the CSV files saved by notebooks 3 and 4. The numbers on the cards and charts are calculated from the data or read from the notebook outputs. The page notes repeat these numbers as text. In the `.pbix` file you can hover over a point or bar on pages 1, 3 and 4 to see how many companies are behind it, and hover over a county on page 2 to see its registrations per year.
 
 | Page | Question | What it shows |
 |---|---|---|
@@ -80,6 +82,7 @@ The full dashboard as a PDF: [irish_company_survival_dashboard.pdf](powerbi/iris
 ```
 irish-company-survival-analysis/
 ├── data/
+│   ├── README.md                      data dictionary for the processed CSV files
 │   ├── raw/
 │   │   └── companies.csv.zip          CRO Company Records, as downloaded
 │   └── processed/
@@ -106,61 +109,10 @@ irish-company-survival-analysis/
 ├── requirements.txt
 └── README.md
 ```
+
 ## Data dictionary
 
-### `companies_clean.csv` (512,008 rows, one per company registered from 2000)
-
-| Column | Type | Description |
-|---|---|---|
-| `company_num` | integer | CRO company number (unique) |
-| `reg_date` | date | Registration date |
-| `company_type` | text | Private limited (LTD), Guarantee (CLG), DAC, Unlimited, Public (PLC), Other, Unknown |
-| `status` | text | Status on the register, e.g. Normal, Dissolved, Strike Off Listed, Liquidation |
-| `closed` | true/false | True when the company has a closing date (left the register) |
-| `closed_date` | date | Date the company left the register; empty if still registered |
-| `nace_code` | text | 4-digit NACE Rev. 2 sector code chosen by the company, stored as text to keep leading zeros (e.g. `0150`); empty for most companies registered before 2015 |
-| `county` | text | County taken from the registered address (uppercase); empty for 1,822 companies |
-
-### `cohort_survival.csv` (72 rows, one per cohort and age)
-
-| Column | Description |
-|---|---|
-| `reg_year` | Registration year (cohort) |
-| `years_after` | Age: 1, 3 or 5 years after registration |
-| `eligible` | Companies old enough to be counted at that age by the data date |
-| `survived` | Of those, companies still registered at that age |
-| `survival_pct` | `survived` / `eligible` × 100 |
-
-### `sector_survival.csv` (19 rows, one per sector with at least 100 companies, 2016 to 2020 cohorts)
-
-| Column | Description |
-|---|---|
-| `section_name` | NACE section (first 2 digits of `nace_code`) |
-| `eligible_5y` | Companies old enough for the 5-year rate |
-| `survived_5y` | Of those, companies still registered after 5 years |
-| `survival_5y_pct` | `survived_5y` / `eligible_5y` × 100 |
-| `ci_low_pct`, `ci_high_pct` | 95% Wilson confidence interval |
-
-### `area_survival.csv` (44 rows, one per cohort and area)
-
-| Column | Description |
-|---|---|
-| `reg_year` | Registration year (cohort) |
-| `area` | Dublin or Other counties |
-| `eligible_5y`, `survived_5y`, `survival_5y_pct` | As in `sector_survival.csv` |
-
-### `model_results.csv` (6 rows, one per model and set)
-
-| Column | Description |
-|---|---|
-| `set` | validation (2018 cohort) or test (2019 and 2020 cohorts) |
-| `model` | Baseline (sector average), Logistic regression or Decision tree |
-| `auc` | Area under the ROC curve (0.5 = guessing, 1.0 = perfect) |
-| `brier` | Brier score (lower is better) |
-| `mean_predicted_pct` | Average predicted survival |
-| `actual_pct` | Share of companies that survived |
-| `auc_gain` | AUC minus the baseline AUC in the same set |
-| `chosen` | True for the model chosen on the validation cohort |
+The columns of the five processed CSV files are described in [data/README.md](data/README.md).
 
 ## How to run
 
@@ -190,27 +142,29 @@ Contains Irish Public Sector Data licensed under a Creative Commons Attribution 
 **Background dates** (used for the reference lines in notebook 3):
 - Brexit referendum, 23 June 2016: [Results of the 2016 UK EU membership referendum](https://en.wikipedia.org/wiki/Results_of_the_2016_United_Kingdom_European_Union_membership_referendum)
 - First COVID-19 restrictions in Ireland, 12 March 2020: [gov.ie, "Updated measures in response to COVID-19 (Coronavirus), Thursday 12 March"](https://www.gov.ie/en/department-of-health/publications/updated-measures-in-response-to-covid-19-coronavirus-thursday-12-march/)
+- CRO stopping strike-offs: [CRO letter, 12 May 2020](https://www.lawsociety.ie/globalassets/documents/news/covid19/letters/letter-from-cro-12-may.pdf) (strike-offs stopped since mid-March 2020) and [Law Society Gazette, September 2026](https://www.lawsociety.ie/gazette/top-stories/2026/september/automated-cro-enforcement-shifts-into-high-gear/) (the CRO is now catching up).
 
 ## Limitations
 
-- **"Survived" means still on the register, not still trading.** Dormant companies count as survived. Companies listed for strike-off or in liquidation also count as survived, so notebook 3 repeats the analysis with a strict rule that counts them as closed.
-- **Recent 5-year rates are probably too high.** Closures fell in 2020 to 2023 and then rose sharply (12,684 in 2026 up to October). Companies removed from the register late still count as registered at their 5-year date.
-- **Sector results cover the 2016 to 2020 cohorts only.** NACE Rev. 2 sector codes are mostly missing before 2015: older companies have codes from an earlier system, which cannot be compared without converting them. Companies choose their own code, and broad codes such as management consultancy make Professional services larger.
-- **County comes from the registered address text.** 1,822 companies have no county, and a registered office is not always where the business operates.
-- **Some registration dates may be wrong.** Companies that merged may have an overwritten registration date. 29 companies with a closing date before their registration date were removed in notebook 1.
-- **The confidence intervals cover random variation only,** not errors in the register.
-- **The model has only three features.** Size, owners, funding and accounts are not in the CRO data, so a low AUC is expected. The rule to choose the model on AUC was stated after the validation scores were seen. The Brier scores were tied, so the choice would not change. The predicted probabilities are too low as absolute rates, because survival rose between the training and test cohorts.
-- **All counts match the October 2026 download.** A newer download will give slightly different numbers.
+- **"Survived" means still on the register, not still trading.** A company that does nothing still counts as survived. Companies waiting to be struck off or in liquidation also count as survived, so in notebook 3 I repeat the analysis with a strict rule that counts them as closed.
+- **Recent 5-year rates are probably too high.** Closures dropped in 2020 to 2023 and then went up a lot (12,684 in 2026, up to October). This fits with the CRO stopping strike-offs in March 2020 and catching up after it started again in 2025. A company removed late still counts as registered at its 5-year date.
+- **Sector results cover the 2016 to 2020 cohorts only.** Before 2015, companies used an older sector code system, and the old and new codes cannot be compared without converting them. Companies also choose their own code, and many pick broad codes such as management consultancy, which makes Professional services look bigger.
+- **County comes from the address text.** 1,822 companies have no county. Also, the registered address is not always where the business really works.
+- **Some registration dates may be wrong.** When companies merge, the register may change the registration date. In notebook 1, I removed 29 companies that closed before their registration date.
+- **The confidence intervals only cover chance differences,** not mistakes in the register.
+- **The model has only three features.** The CRO data has no company size, owners, funding or accounts, so a low AUC is expected. I decided to choose the model by AUC only after I saw the validation scores. The Brier scores were the same for all models, so this did not change the choice. The predicted survival rates are too low, because survival went up between the training and test cohorts.
+- **All numbers are from the October 2026 download.** A newer download will give slightly different numbers.
 
 ## About this project
-An end-to-end portfolio project covering the full analytics workflow: public raw data, cleaning and quality checks in Python, a SQL Server database, survival analysis, a predictive model and a Power BI dashboard.
+I did this project from start to finish: raw CRO data, cleaning in Python, a SQL Server database, survival analysis, a simple model and a Power BI dashboard.
 
-The methods were chosen to avoid common mistakes in survival and prediction work:
-- A company is counted at an age only once it has reached that age by the data date, so recent cohorts are not counted as survivors too early.
-- Every 5-year survival rate has a 95% confidence interval (Wilson; Newcombe for the Dublin gap), so differences caused by small samples are not over-read.
-- The Dublin gap is tested cohort by cohort and with the same sector mix (direct standardisation), so it is not caused by a different mix of years or sectors.
-- Key results are repeated under a stricter closed rule and a later start year, so they do not depend on one definition.
-- The model is trained on earlier cohorts and tested on later ones, with settings fixed in advance and the test data used once. It is compared with a simple sector-average baseline.
-- The model is scored on AUC and Brier score, not accuracy, because 81.9% of companies survived.
+The data needed more checking than I expected, and some things I found changed my plan:
+- **The same status was saved in two ways.** 323,502 companies had `Normal ` with a space at the end and 900 had `Normal`. I removed the spaces before deciding which statuses mean "closed".
+- **Old records follow different rules.** The oldest registration date is 1753, and the status `Dissolved-20 years` is used for very old closures. It still appears up to 2000-2004, so I start in 2000 and check if the results change when I start in 2005.
+- **The sector code system changed in 2015.** Older companies use different codes, so the sector analysis only uses the 2016 to 2020 cohorts.
+- **29 companies closed before they were registered.** All of them left the register after a merger or a move abroad, and 28 have a registration date in 2020 or 2021, so the register probably changed the date. I can't measure how long they lasted, so I removed them.
+- **"Still registered" is not the same as "still trading".** 17,045 companies are waiting to be struck off or in liquidation but have no closing date. Counting them as closed lowers 5-year survival by up to 9.4 points, so I show the results with both rules.
+- **A company only counts at an age once it has reached it.** Without this rule, the youngest cohorts would look like they all survived.
+- **The weak model is also a result.** With only sector, area and company type, the best model reaches an AUC of 0.610. All models predict too low for later cohorts, because survival went up over time.
 
-**Author:** Temuulen Bulgan
+**Author:** Temuulen Bulgan, MSc Data Analytics, BSc Statistics and Economics · [LinkedIn](https://www.linkedin.com/in/temulenbd/)
