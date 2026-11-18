@@ -156,7 +156,7 @@ Contains Irish Public Sector Data licensed under a Creative Commons Attribution 
 - **All numbers are from the October 2026 download.** A newer download will give slightly different numbers.
 
 ## About this project
-I did this project from start to finish: raw CRO data, cleaning in Python, a SQL Server database, survival analysis, a simple model and a Power BI dashboard.
+This is an end-to-end portfolio project: raw CRO data, cleaning in Python, a SQL Server database, survival analysis, a simple model and a Power BI dashboard.
 
 The data needed more checking than I expected, and some things I found changed my plan:
 - **The same status was saved in two ways.** 323,502 companies had `Normal ` with a space at the end and 900 had `Normal`. I removed the spaces before deciding which statuses mean "closed".
